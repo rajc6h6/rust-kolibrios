@@ -1,67 +1,89 @@
-#[link(name = "syscalls")]
+﻿#[link(name = "syscalls")]
 extern "C" {
-    // Системный вызов для завершения программы
+    // -1
     #[link_name = "_exit"]
     pub fn exit() -> !;
 
-    // Системный вызов для создания окна
+    // 0
     #[link_name = "_define_window"]
     pub fn define_window(ebx: u32, ecx: u32, edx: u32, esi: u32, edi: u32);
 
-    // Системный вызов для установки пикселя
+    // 1
     #[link_name = "_put_pixel"]
     pub fn put_pixel(ebx: u32, ecx: u32, edx: u32);
 
-    // Системный вызов для получения нажатой клавиши
+    // 2
     #[link_name = "_pressed_key"]
     pub fn pressed_key() -> u32;
 
-    // Системный вызов для отображения сообщения
+    // 4
     #[link_name = "_display_message"]
     pub fn display_message(ebx: u32, ecx: u32, edx: u32, esi: u32, edi: u32);
 
-    // Системный вызов для создания кнопки
+    // 8
     #[link_name = "_define_button"]
     pub fn define_button(ebx: u32, ecx: u32, edx: u32, esi: u32);
 
-    // Системный вызов для ожидания события
+    // 10
     #[link_name = "_wait_event"]
     pub fn wait_event() -> u32;
 
-    // Системные вызовы для начала и конца отрисовки окна
+    // 12.1
     #[link_name = "_start_window_draw"]
     pub fn start_window_draw();
 
+    // 12.2
     #[link_name = "_end_window_draw"]
     pub fn end_window_draw();
 
-    // Системный вызов для получения ID кнопки
+    // 17
     #[link_name = "_get_button_id"]
     pub fn get_button_id() -> u32;
 
-    // Системный вызов для получения языка системы
+    // 26.5
     #[link_name = "_get_lang"]
     pub fn get_lang() -> u32;
 
-    // Системный вызов для установки маски событий
+    // 40
     #[link_name = "_set_event_mask"]
     pub fn set_event_mask(mask: u32) -> u32;
 
-    // Системный вызов для записи отладочной информации
+    // 63.1
     #[link_name = "_debug_write"]
     pub fn _debug_write(cl: u8);
 
-    // Системные вызовы для управления кучей
+    // 68.11
     #[link_name = "_init_heap"]
     pub fn init_heap();
 
+    // 68.12
     #[link_name = "_alloc"]
     pub fn alloc(size: usize) -> *const u8;
 
+    // 68.13
     #[link_name = "_free"]
     pub fn free(block: *const u8) -> bool;
 
-    // Системный вызов для загрузки динамической библиотеки
+    // 68.19
     #[link_name = "_load_dll"]
     pub fn load_dll(name: *const u8) -> *const u32;
+
+    // 70 - filesystem read/write
+    #[link_name = "_fs_read"]
+    pub fn fs_read(info: *const FsInfo) -> u32;
+
+    #[link_name = "_fs_write"]
+    pub fn fs_write(info: *const FsInfo) -> u32;
+}
+
+/// FileSystem info block for KolibriOS syscall 70
+#[repr(C)]
+pub struct FsInfo {
+    pub operation:  u32,
+    pub offset:     u32,
+    pub offset_hi:  u32,
+    pub byte_count: u32,
+    pub buffer:     *mut u8,
+    pub reserved:   u8,
+    pub path:       *const u8,
 }

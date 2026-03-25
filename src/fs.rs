@@ -1,31 +1,35 @@
-use core::arch::asm;
+﻿use core::ffi::CStr;
+use crate::sys::{fs_read, fs_write, FsInfo};
 
-/// KolibriOS Function 70 — filesystem operations
-/// Passes a pointer to a FileInfo structure via ebx
-/// int 0x40 with eax=70 is the KolibriOS FS syscall
+const FS_OP_READ:  u32 = 0;
+const FS_OP_WRITE: u32 = 3;
 
-#[repr(C, packed)]
-pub struct FileInfo {
-    pub func:       u32,   // 0 = read, 1 = read folder, 2 = create/write
-    pub param1:     u32,   // offset (low)
-    pub param2:     u32,   // offset (high) or flags
-    pub param3:     u32,   // bytes to read/write
-    pub buf:        *mut u8, // pointer to buffer
-    pub name:       *const u8, // pointer to filename (ASCIIZ)
+/// Read a file at `path` into `buf`. Returns number of bytes read, or Err(error_code).
+pub fn read_file(path: &CStr, buf: &mut [u8]) -> Result<u32, u32> {
+    let mut info = FsInfo {
+        operation:  FS_OP_READ,
+        offset:     0,
+        offset_hi:  0,
+        byte_count: buf.len() as u32,
+        buffer:     buf.as_mut_ptr(),
+        reserved:   0,
+        path:       path.as_ptr() as *const u8,
+    };
+    let result = unsafe { fs_read(&mut info as *mut FsInfo as *const FsInfo) };
+    if result == 0 { Ok(info.byte_count) } else { Err(result) }
 }
 
-/// Opens/reads a file on KolibriOS using syscall eax=70
-/// Returns (eax_result, ebx_bytes_read)
-pub unsafe fn fs_read(info: *const FileInfo) -> (u32, u32) {
-    let eax_out: u32;
-    let ebx_out: u32;
-    unsafe {
-        asm!(
-            "int 0x40",
-            inlateout("eax") 70u32 => eax_out,
-            inlateout("ebx") info as u32 => ebx_out,
-            options(nostack)
-        );
-    }
-    (eax_out, ebx_out)
+/// Write `buf` to a file at `path`. Returns number of bytes written, or Err(error_code).
+pub fn write_file(path: &CStr, buf: &[u8]) -> Result<u32, u32> {
+    let mut info = FsInfo {
+        operation:  FS_OP_WRITE,
+        offset:     0,
+        offset_hi:  0,
+        byte_count: buf.len() as u32,
+        buffer:     buf.as_ptr() as *mut u8,
+        reserved:   0,
+        path:       path.as_ptr() as *const u8,
+    };
+    let result = unsafe { fs_write(&mut info as *mut FsInfo as *const FsInfo) };
+    if result == 0 { Ok(info.byte_count) } else { Err(result) }
 }

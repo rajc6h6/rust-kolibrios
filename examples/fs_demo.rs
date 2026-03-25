@@ -1,25 +1,16 @@
 ﻿#![no_std]
 #![no_main]
 
-use kos::fs::{FileInfo, fs_read};
+use core::ffi::CStr;
+use kos::fs::{read_file, write_file};
 
-static FILENAME: &[u8] = b"/rd/1/readme.txt\0";
-static mut BUFFER: [u8; 256] = [0u8; 256];
+const FILE_PATH:  &CStr = c"/tmp/0/test.txt";
+const WRITE_DATA: &[u8] = b"Hello from Rust on KolibriOS";
 
 #[no_mangle]
-pub extern "C" fn _start() -> ! {
-    unsafe {
-        let info = FileInfo {
-            func:   0,
-            param1: 0,
-            param2: 0,
-            param3: 256,
-            buf:    BUFFER.as_mut_ptr(),
-            name:   FILENAME.as_ptr(),
-        };
+fn kol_main() {
+    let _ = write_file(FILE_PATH, WRITE_DATA);
 
-        let (_result, _bytes_read) = fs_read(&info as *const FileInfo);
-    }
-
-    loop {}
+    let mut buf = [0u8; 64];
+    let _ = read_file(FILE_PATH, &mut buf);
 }

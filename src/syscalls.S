@@ -1,4 +1,4 @@
-format ELF
+﻿format ELF
 
 include "src/func_constants.inc"
 
@@ -20,6 +20,8 @@ section '.text'
     public _get_lang
     public _load_dll
     public _set_event_mask
+    public _fs_read
+    public _fs_write
 
 _exit:
     mov eax, SF_TERMINATE_PROCESS
@@ -143,3 +145,18 @@ _set_event_mask:
     int 0x40
     ret
 
+_fs_read:
+    push ebx
+    mov eax, 70
+    mov ebx, [esp + 4 * 2]
+    int 0x40
+    pop ebx
+    ret
+
+_fs_write:
+    push ebx
+    mov eax, 70
+    mov ebx, [esp + 4 * 2]
+    int 0x40
+    pop ebx
+    ret
